@@ -1,0 +1,83 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)    # For ggplot, dplyr, and friends
+library(countrycode)  # For dealing with country names, abbreviations, and codes
+library(lubridate)    # For dealing with dates
+library(WDI)
+```
+
+```{r}
+refugees_raw <- read_csv("refugee_status.csv", na = c("-", "X", "D"))
+
+non_countries <- c("Africa", "Asia", "Europe", "North America", "Oceania",
+                   "South America", "Unknown", "Other", "Total")
+
+refugees_clean <- refugees_raw %>%
+  # Make this column name easier to work with
+  rename(origin_country = `Continent/Country of Nationality`) %>%
+  # Get rid of non-countries
+  filter(!(origin_country %in% non_countries)) %>%
+  # Convert country names to ISO3 codes
+  mutate(iso3 = countrycode(origin_country, "country.name", "iso3c",
+                            custom_match = c("Korea, North" = "PRK"))) %>%
+  # Convert ISO3 codes to country names, regions, and continents
+  mutate(origin_country = countrycode(iso3, "iso3c", "country.name"),
+         origin_region = countrycode(iso3, "iso3c", "region"),
+         origin_continent = countrycode(iso3, "iso3c", "continent")) %>%
+  # Make this data tidy
+  gather(year, number, -origin_country, -iso3, -origin_region, -origin_continent) %>%
+  # Make sure the year column is numeric + make an actual date column for years
+  mutate(year = as.numeric(year),
+         year_date = ymd(paste0(year, "-01-01")))
+```
+
+```{r}
+refugees_countries_cumulative <- refugees_clean %>%
+  arrange(year_date) %>%
+  group_by(origin_country) %>%
+  mutate(cumulative_total = cumsum(number))
+
+refugees_continents <- refugees_clean %>%
+  group_by(origin_continent, year_date) %>%
+  summarise(total = sum(number, na.rm = TRUE))
+
+refugees_clean <- refugees_raw %>%
+  rename(origin_country = `Continent/Country of Nationality`) %>%
+  dplyr::filter(!(origin_country %in% non_countries)) %>%
+  mutate(iso2 = countrycode(origin_country, "country.name", "iso2c",
+                            custom_match = c("Korea, North" = "KP"))) %>%
+  mutate(origin_country = countrycode(iso2, "iso2c", "country.name"),
+         origin_region = countrycode(iso2, "iso2c", "region"),
+         origin_continent = countrycode(iso2, "iso2c", "continent")) %>%
+  gather(year, number, -origin_country, -iso2, -origin_region, -origin_continent) %>%
+  mutate(year = as.numeric(year),
+         year_date = ymd(paste0(year, "-01-01")),
+         iso2c = iso2)
+
+library(WDI)
+myData = WDI(country = refugees_clean$iso2, indicator = 'SP.POP.TOTL', start = 2006, end = 2015)  %>%
+      dplyr::select(-country)
+
+refugees_clean_merged = left_join(refugees_clean, myData, by = c('iso2c','year')) 
+
+head(refugees_clean_merged %>% dplyr::select(origin_country, number, iso2, year, SP.POP.TOTL))
+
+```
+```{r}
+table(refugees_clean$origin_region)
+ref_reg <- refugees_clean %>% 
+  group_by(origin_region, year) %>%
+  summarise(total = sum(year))
+p = ggplot(data = ref_reg, mapping = aes(x=year, y=total, fill=origin_region)) + geom_bar(position='dodge',stat="identity", color='black')
+
+ref_country <- refugees_clean %>% 
+  group_by(origin_continent, year) %>%
+  summarise(total = sum(year))
+b = ggplot(data = ref_country, mapping = aes(x=year, y=total, fill=origin_continent)) + geom_bar(position='dodge',stat="identity", color='black')
+
+p
+b
+```
