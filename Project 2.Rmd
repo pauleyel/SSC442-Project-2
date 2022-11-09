@@ -80,45 +80,19 @@ head(refugees_clean_merged %>% dplyr::select(origin_country, number, iso2, year,
 
 
 
-```{r}
-table(refugees_clean$origin_region)
-ref_reg <- refugees_clean %>% 
-  group_by(origin_region, year) %>%
-  summarise(total = sum(year))
-p = ggplot(data = ref_reg, mapping = aes(x=year, y=total, fill=origin_region)) + geom_bar(position='dodge',stat="identity", color='black')
-
-ref_country <- refugees_clean %>% 
-  group_by(origin_continent, year) %>%
-  summarise(total = sum(year))
-b = ggplot(data = ref_country, mapping = aes(x=year, y=total, fill=origin_continent)) + geom_bar(position='dodge',stat="identity", color='black')
-
-p
-b
-```
-
-
-
+Exploratory analysis- all countries
 ```{r}
 refugees_clean %>%
   ggplot(aes(year, number, group = origin_country)) +
-  geom_line(aes(color = origin_country), show.legend = FALSE)
+  geom_line(aes(color = origin_country), show.legend = TRUE)
 ```
-
-```{r}
-refugees_clean
-```
-
-
 
 Lets group by origin continent
 ```{r}
 ref_cont <- refugees_clean %>% 
   group_by(origin_continent,year) %>%
   summarise(total = sum(number, na.rm=TRUE))
-ref_cont
-```
 
-```{r}
 ref_cont %>%
   ggplot(aes(year, total, group = origin_continent)) +
   geom_line(aes(color = origin_continent), show.legend = TRUE, size=2)+
@@ -126,34 +100,18 @@ ref_cont %>%
 ```
 
 
+Lets group by origin continent
 ```{r}
 ref_origin <- refugees_clean %>% 
   group_by(origin_region,year) %>%
   summarise(total = sum(number, na.rm=TRUE))
-ref_origin
-```
 
-```{r}
 ref_origin %>%
   ggplot(aes(year, total, group = origin_region)) +
   geom_line(aes(color = origin_region), show.legend = TRUE, size=2)+
     geom_point(size = 2)
 ```
 
-```{r}
-p = ggplot(data = ref_origin, mapping = aes(x=year, y=total, fill=origin_region)) + geom_bar(position='dodge',stat="identity", color='black')
-p
-```
-
-
-
-```{r}
-refugees_countries_cumulative <- refugees_clean %>%
-  arrange(year_date) %>%
-  group_by(origin_country) %>%
-  mutate(cumulative_total = cumsum(number))
-refugees_countries_cumulative
-```
 
 
 
@@ -165,50 +123,150 @@ ref_cum
 ```
 
 
-
-
-```{r}
-refugees_clean_merged
-```
-
-
-
+Per capita calculations
 ```{r}
 refugees_percap <- refugees_clean_merged %>%
   arrange(year_date) %>%
   group_by(origin_country) %>%
   mutate(percap = number/SP.POP.TOTL)
-refugees_percap
-
 ```
 
 
 ```{r}
-ref_cap <- refugees_percap %>% 
+ref_cap_origin <- refugees_percap %>% 
   group_by(origin_region,year) %>%
   summarise(totalcap = sum(percap, na.rm=TRUE))
-ref_cap
-```
 
-
-
-```{r}
-ref_cap %>%
+ref_cap_origin %>%
   ggplot(aes(year, totalcap, group = origin_region)) +
   geom_line(aes(color = origin_region), show.legend = TRUE, size=2)+
     geom_point(size = 2)
-
-
 ```
 
-South Asia has... a lot
-Look by country by South Asia
 
 ```{r}
 ref_cap_country <- refugees_percap %>% 
   group_by(origin_country,year, origin_region) %>%
   summarise(totalcap = sum(percap, na.rm=TRUE))
-ref_cap_cpuntry
+unique(ref_cap_country$origin_country)
 ```
+
+Top 10 countries with refugees in 2010:
+https://www.migrationpolicy.org/article/refugees-and-asylees-united-states-2021#:~:text=Refugees%20from%20Myanmar%20were%20the,13%20percent%20(77%2C400%20refugees). 
+
+1. Iraq
+2. Myanmar (Burma)
+3. Bhutan
+4. Somalia
+5. Cuba
+6. Iran
+7. Congo (Congo - Brazzaville) and (Congo - Kinshasa)
+8. Eritrea
+9. Palestine
+10. Vietnam
+
+Countries with US conflict:
+1. Afghanistan
+2. Syria
+3. Myanmar
+4. Pakistan
+5. Iraq
+
+```{r}
+top_countries=ref_cap_country %>% filter(origin_country%in% c("Iraq", "Myanmar (Burma)", "Liberia", "Moldova", "Eritrea", "Somalia"))
+```
+
+```{r}
+top_countries %>%
+  ggplot(aes(year, totalcap, group = origin_country)) +
+  geom_line(aes(color = origin_country), show.legend = TRUE)+
+    geom_point()
+```
+
+
+
+
+
+```{r}
+sa_data=refugees_clean %>% filter(origin_region=="South Asia" )
+
+sa_data %>%
+  ggplot(aes(year, number, group = origin_country)) +
+  geom_line(aes(color = origin_country), show.legend = TRUE, size=2)+
+    geom_point(size = 2)
+```
+
+
+
+
+```{r}
+eu_data=refugees_clean %>% filter(origin_region=="Europe & Central Asia" )
+
+eu_data %>%
+  ggplot(aes(year,number, group = origin_country)) +
+  geom_line(aes(color = origin_country), show.legend = TRUE, size=2)+
+    geom_point(size = 2)
+```
+
+
+
+```{r}
+na_data=refugees_clean %>% filter(origin_region=="Latin America & Caribbean" )
+
+na_data %>%
+  ggplot(aes(year, number, group = origin_country)) +
+  geom_line(aes(color = origin_country), show.legend = TRUE, size=2)+
+    geom_point(size = 2)
+```
+
+
+```{r}
+ssafrica_data=refugees_clean %>% filter(origin_region=="Sub-Saharan Africa" )
+
+ssafrica_data %>%
+  ggplot(aes(year, number, group = origin_country)) +
+  geom_line(aes(color = origin_country), show.legend = TRUE, size=2)+
+    geom_point(size = 2)
+```
+
+```{r}
+meafrica_data=refugees_clean %>% filter(origin_region=="Middle East & North Africa" )
+
+meafrica_data %>%
+  ggplot(aes(year, number, group = origin_country)) +
+  geom_line(aes(color = origin_country), show.legend = TRUE, size=2)+
+    geom_point(size = 2)
+```
+
+
+```{r}
+easia_data=refugees_clean %>% filter(origin_region=="East Asia & Pacific" )
+
+easia_data %>%
+  ggplot(aes(year, number, group = origin_country)) +
+  geom_line(aes(color = origin_country), show.legend = TRUE, size=2)+
+    geom_point(size = 2)
+```
+
+```{r}
+top_countries_region=ref_cap_country %>% filter(origin_country%in% c("Iraq", "Myanmar (Burma)", "Somalia", "Russia", "Cuba", "Bhutan"))
+```
+
+```{r}
+top_countries_region %>%
+  ggplot(aes(year, totalcap, group = origin_country)) +
+  geom_line(aes(color = origin_country), show.legend = TRUE)+
+    geom_point()
+```
+
+```{r}
+
+top_countries_region2=refugees_countries_cumulative %>% filter(origin_country%in% c("Iraq", "Myanmar (Burma)", "Somalia", "Russia", "Cuba", "Bhutan"))
+top_countries_region2 %>%
+  ggplot(aes(year, number, group = origin_country)) +
+  geom_line(aes(color = origin_country), show.legend = TRUE)+
+    geom_point()+scale_x_continuous(breaks = scales::pretty_breaks(n = 12))
+```
+
 
 
