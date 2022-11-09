@@ -262,10 +262,19 @@ top_countries_region %>%
 ```{r}
 
 top_countries_region2=refugees_countries_cumulative %>% filter(origin_country%in% c("Iraq", "Myanmar (Burma)", "Somalia", "Russia", "Cuba", "Bhutan"))
-top_countries_region2 %>%
-  ggplot(aes(year, number, group = origin_country)) +
-  geom_line(aes(color = origin_country), show.legend = TRUE)+
-    geom_point()+scale_x_continuous(breaks = scales::pretty_breaks(n = 12))
+
+x = ggplot(data = top_countries_region2, aes(year, number, group = origin_country)) +
+  geom_line(aes(color = origin_country), show.legend = TRUE,size=1.25)+
+    geom_point()+scale_x_continuous(breaks = scales::pretty_breaks(n = 12)) 
+
+x + theme_bw() + labs(x="Year", y= "Number of refugees", title="Number of refugees from 2006 to 2015") +
+  theme(legend.position = "right") + theme(legend.key.size = unit(0.5, 'cm')) + 
+  theme(legend.text = element_text(size=8)) + theme(legend.title = element_text(size=12))+
+  theme(legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid')) +
+  guides(color = guide_legend(title="Origin Country")) +
+  theme(axis.text=element_text(size=10),axis.title=element_text(size=10,face="bold")) +
+  theme(plot.title = element_text(face="bold")) 
+
 ```
 
 
