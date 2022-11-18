@@ -1,16 +1,18 @@
 ---
 title: "SSCProject2"
-author: "Elizabeth Pauley"
+author: "Group Slay- Elizabeth Pauley, Ata Algan, CJ Sivak"
 date: "11/2/2022"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
 ```
 
+
+## Part 1
 Load packages
-```{r}
+```{r,  message=FALSE}
 library(tidyverse)
 library(countrycode)  
 library(lubridate)   
@@ -18,8 +20,8 @@ library(WDI)
 ```
 
 
-Read in data and clean
-```{r}
+Read in data and clean (code provided)
+```{r ,warning=FALSE, message=FALSE}
 refugees_raw <- read_csv("refugee_status.csv", na = c("-", "X", "D"))
 
 non_countries <- c("Africa", "Asia", "Europe", "North America", "Oceania",
@@ -42,10 +44,8 @@ refugees_clean <- refugees_raw %>%
   # Make sure the year column is numeric + make an actual date column for years
   mutate(year = as.numeric(year),
          year_date = ymd(paste0(year, "-01-01")))
-```
 
 
-```{r}
 refugees_countries_cumulative <- refugees_clean %>%
   arrange(year_date) %>%
   group_by(origin_country) %>%
@@ -78,29 +78,8 @@ head(refugees_clean_merged %>% dplyr::select(origin_country, number, iso2, year,
 
 ```
 
-
-
-Exploratory analysis- all countries
-```{r}
-refugees_clean %>%
-  ggplot(aes(year, number, group = origin_country)) +
-  geom_line(aes(color = origin_country), show.legend = TRUE)
-```
-
-Lets group by origin continent
-```{r}
-ref_cont <- refugees_clean %>% 
-  group_by(origin_continent,year) %>%
-  summarise(total = sum(number, na.rm=TRUE))
-
-ref_cont %>%
-  ggplot(aes(year, total, group = origin_continent)) +
-  geom_line(aes(color = origin_continent), show.legend = TRUE, size=2)+
-    geom_point(size = 2)
-```
-
-
-Lets group by origin continent
+We did some exploratory analysis and plots to find any trends we thought would be worth looking at for our inforgraphic.
+After some analysis, we examined countries by origin region. Our final visual for our inforgraphic is the last plot in this file. However, we created additional plots to pinpoint the country with the most refugees for each origin region. Our final visual groups the top country from each origin region onto one plot. 
 ```{r}
 ref_origin <- refugees_clean %>% 
   group_by(origin_region,year) %>%
@@ -113,80 +92,7 @@ ref_origin %>%
 ```
 
 
-
-
-```{r}
-ref_cum <- refugees_countries_cumulative %>% 
-  group_by(origin_region,year) %>%
-  summarise(totalcum = sum(number, na.rm=TRUE))
-ref_cum
-```
-
-
-Per capita calculations
-```{r}
-refugees_percap <- refugees_clean_merged %>%
-  arrange(year_date) %>%
-  group_by(origin_country) %>%
-  mutate(percap = number/SP.POP.TOTL)
-```
-
-
-```{r}
-ref_cap_origin <- refugees_percap %>% 
-  group_by(origin_region,year) %>%
-  summarise(totalcap = sum(percap, na.rm=TRUE))
-
-ref_cap_origin %>%
-  ggplot(aes(year, totalcap, group = origin_region)) +
-  geom_line(aes(color = origin_region), show.legend = TRUE, size=2)+
-    geom_point(size = 2)
-```
-
-
-```{r}
-ref_cap_country <- refugees_percap %>% 
-  group_by(origin_country,year, origin_region) %>%
-  summarise(totalcap = sum(percap, na.rm=TRUE))
-unique(ref_cap_country$origin_country)
-```
-
-Top 10 countries with refugees in 2010:
-https://www.migrationpolicy.org/article/refugees-and-asylees-united-states-2021#:~:text=Refugees%20from%20Myanmar%20were%20the,13%20percent%20(77%2C400%20refugees). 
-
-1. Iraq
-2. Myanmar (Burma)
-3. Bhutan
-4. Somalia
-5. Cuba
-6. Iran
-7. Congo (Congo - Brazzaville) and (Congo - Kinshasa)
-8. Eritrea
-9. Palestine
-10. Vietnam
-
-Countries with US conflict:
-1. Afghanistan
-2. Syria
-3. Myanmar
-4. Pakistan
-5. Iraq
-
-```{r}
-top_countries=ref_cap_country %>% filter(origin_country%in% c("Iraq", "Myanmar (Burma)", "Liberia", "Moldova", "Eritrea", "Somalia"))
-```
-
-```{r}
-top_countries %>%
-  ggplot(aes(year, totalcap, group = origin_country)) +
-  geom_line(aes(color = origin_country), show.legend = TRUE)+
-    geom_point()
-```
-
-
-
-
-
+South Asia refugees- Bhutan
 ```{r}
 sa_data=refugees_clean %>% filter(origin_region=="South Asia" )
 
@@ -196,9 +102,7 @@ sa_data %>%
     geom_point(size = 2)
 ```
 
-
-
-
+Europe & Central Asia refugees- Russia
 ```{r}
 eu_data=refugees_clean %>% filter(origin_region=="Europe & Central Asia" )
 
@@ -208,8 +112,7 @@ eu_data %>%
     geom_point(size = 2)
 ```
 
-
-
+Latin America & Caribbean refugees- Cuba
 ```{r}
 na_data=refugees_clean %>% filter(origin_region=="Latin America & Caribbean" )
 
@@ -219,7 +122,7 @@ na_data %>%
     geom_point(size = 2)
 ```
 
-
+Sub-Saharan Africa refugees- Somalia
 ```{r}
 ssafrica_data=refugees_clean %>% filter(origin_region=="Sub-Saharan Africa" )
 
@@ -229,6 +132,7 @@ ssafrica_data %>%
     geom_point(size = 2)
 ```
 
+Middle East & North Africa refugees- Iraq
 ```{r}
 meafrica_data=refugees_clean %>% filter(origin_region=="Middle East & North Africa" )
 
@@ -238,7 +142,7 @@ meafrica_data %>%
     geom_point(size = 2)
 ```
 
-
+East Asia & Pacific refugees- Myanmar (Burma)
 ```{r}
 easia_data=refugees_clean %>% filter(origin_region=="East Asia & Pacific" )
 
@@ -248,28 +152,14 @@ easia_data %>%
     geom_point(size = 2)
 ```
 
+### Final Visual
 ```{r}
-top_countries_region=ref_cap_country %>% filter(origin_country%in% c("Iraq", "Myanmar (Burma)", "Somalia", "Russia", "Cuba", "Bhutan"))
-```
-
-```{r}
-top_countries_region %>%
-  ggplot(aes(year, totalcap, group = origin_country)) +
-  geom_line(aes(color = origin_country), show.legend = TRUE)+
-    geom_point()
-```
-
-```{r}
-
 top_countries_region2=refugees_countries_cumulative %>% filter(origin_country%in% c("Iraq", "Myanmar (Burma)", "Somalia", "Russia", "Cuba", "Bhutan"))
-
 color_blind_friendly_cols <-
   c("#D55E00","#F0E442", "#0072B2", "#009E73", "#999999", "#CC79A7")
-
 x = ggplot(data = top_countries_region2, aes(year, number, group = origin_country)) +
   geom_line(aes(color = origin_country), show.legend = TRUE,size=1.25)+
     geom_point()+scale_x_continuous(breaks = scales::pretty_breaks(n = 12)) 
-
 x + scale_color_manual(values=color_blind_friendly_cols) +theme_bw() + labs(x="Year", y= "Number of refugees", title="Number of refugees from 2006 to 2015") +
   theme(legend.position = "right") + theme(legend.key.size = unit(0.5, 'cm')) + 
   theme(legend.text = element_text(size=8)) + theme(legend.title = element_text(size=12))+
@@ -277,8 +167,34 @@ x + scale_color_manual(values=color_blind_friendly_cols) +theme_bw() + labs(x="Y
   guides(color = guide_legend(title="Origin Country")) +
   theme(axis.text=element_text(size=10),axis.title=element_text(size=10,face="bold")) +
   theme(plot.title = element_text(face="bold")) 
+ggsave("final plot.pdf", width = 20, height = 10, units = "cm")
 
 ```
 
+
+
+## Part 2: Hypotheses
+
+[Data](https://data.census.gov/cedsci/table?t=Business%20Dynamics&g=310XX00US12420,16980,35620,41860)
+
+1. Is there higher unemployment rate/business closure rate during economic downturns among cities with a larger population?
+
+We think major cities will bear the burden of an economic recession in contrast to smaller cities. Compare cities that are small and have grown siginificantly in recent years (Austin) to New York in times such as 2008 before Austin's major growth, and times of 2020, during Austin's growth.
+
+2. Are there increases in Health and social assitance establishments in times of economic downturn?
+
+We think this would be an interesting topic to research as we would believe more people need these programs during that time. However, since we are in an economic downturn and all types of businesses are closing, we should see if social assistance programs are also closing.
+
+3. Are there industries that grow fastest during an economic upswing, and does this vary by city?
+
+We think this would be a particularly interesting topic to look at, especially with the emergence of big tech in our dataset. We hypothesize that big tech probably has the fastest growth in certain cities, but others in our dataset might be more towards finance/banking in times of economic growth.
+
+4. Are there any industries that have been on a constant pattern since the data started (industry decline/incline)? 
+
+Certain cities may have zoned in on being the "hub" for a certain industry, such as technology or finance. We want to locate what these are, and also see what industries have been on the decline since the data started.
+
+5. Is there a correlation between minimum wage and number of employees? 
+
+We think this will be particularly interesting due to different minimum wages across our cities. We think with a higher minimum wage there will be less employees.
 
 
